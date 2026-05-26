@@ -17,6 +17,12 @@ pub enum AppError {
     Internal(#[from] anyhow::Error),
 }
 
+impl From<std::io::Error> for AppError {
+    fn from(e: std::io::Error) -> Self {
+        AppError::Internal(e.into())
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, body): (_, String) = match self {

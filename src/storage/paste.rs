@@ -102,10 +102,10 @@ impl PasteStore {
         )
         .map_err(|_| AppError::NotFound)?;
 
-        if let Ok(expires) = DateTime::parse_from_rfc3339(&meta.expires_at) {
-            if Utc::now() > expires.with_timezone(&Utc) {
-                return Err(AppError::Gone);
-            }
+        if let Ok(expires) = DateTime::parse_from_rfc3339(&meta.expires_at)
+            && Utc::now() > expires.with_timezone(&Utc)
+        {
+            return Err(AppError::Gone);
         }
 
         let content = fs::read(self.paste_path(id))
@@ -151,12 +151,12 @@ impl PasteStore {
         let mut pastes = Vec::new();
         for entry in fs::read_dir(&self.data_dir)? {
             let entry = entry?;
-            if entry.file_name().to_string_lossy().ends_with(".json") {
-                if let Ok(meta) = serde_json::from_reader::<_, Metadata>(
+            if entry.file_name().to_string_lossy().ends_with(".json")
+                && let Ok(meta) = serde_json::from_reader::<_, Metadata>(
                     fs::File::open(entry.path())?
-                ) {
-                    pastes.push(meta);
-                }
+                )
+            {
+                pastes.push(meta);
             }
         }
         pastes.sort_by(|a, b| b.created_at.cmp(&a.created_at));
@@ -180,13 +180,13 @@ impl PasteStore {
                 if meta.data_policy == "permanent" {
                     continue;
                 }
-                if let Ok(expires) = DateTime::parse_from_rfc3339(&meta.expires_at) {
-                    if Utc::now() > expires.with_timezone(&Utc) {
-                        let _ = fs::remove_file(self.paste_path(id));
-                        let _ = fs::remove_file(self.meta_path(id));
-                        tracing::info!(id = %id, "expired paste removed");
-                        removed += 1;
-                    }
+                if let Ok(expires) = DateTime::parse_from_rfc3339(&meta.expires_at)
+                    && Utc::now() > expires.with_timezone(&Utc)
+                {
+                    let _ = fs::remove_file(self.paste_path(id));
+                    let _ = fs::remove_file(self.meta_path(id));
+                    tracing::info!(id = %id, "expired paste removed");
+                    removed += 1;
                 }
             }
         }
@@ -217,7 +217,7 @@ impl PasteStore {
                 return Ok(id);
             }
         }
-        Err(io::Error::new(io::ErrorKind::Other, "failed to generate unique ID"))
+        Err(io::Error::other("failed to generate unique ID"))
     }
 }
 

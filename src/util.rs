@@ -22,12 +22,12 @@ pub fn looks_like_text(data: &[u8]) -> bool {
 }
 
 pub fn detect_content_type(data: &[u8], header: Option<&str>) -> String {
-    if let Some(h) = header {
-        if let Some(ct) = h.split(';').next() {
-            let ct = ct.trim();
-            if !ct.is_empty() && ct != "application/octet-stream" {
-                return ct.to_string();
-            }
+    if let Some(h) = header
+        && let Some(ct) = h.split(';').next()
+    {
+        let ct = ct.trim();
+        if !ct.is_empty() && ct != "application/octet-stream" {
+            return ct.to_string();
         }
     }
     let mime_str = match infer::get(data) {

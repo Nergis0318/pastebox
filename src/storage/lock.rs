@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
+type LockEntry = (Arc<Mutex<()>>, usize);
+
 pub struct LockManager {
-    locks: RwLock<HashMap<String, (Arc<Mutex<()>>, usize)>>,
+    locks: RwLock<HashMap<String, LockEntry>>,
 }
 
 impl LockManager {
@@ -13,7 +15,7 @@ impl LockManager {
         }
     }
 
-    pub async fn acquire(&self, id: &str) -> LockGuard {
+    pub async fn acquire(&self, id: &str) -> LockGuard<'_> {
         let mut locks = self.locks.write().await;
         let (lock, count) = locks
             .entry(id.to_string())
@@ -29,12 +31,12 @@ impl LockManager {
     }
 }
 
+#[allow(dead_code)]
 pub struct LockGuard<'a> {
     guard: tokio::sync::OwnedMutexGuard<()>,
-    #[allow(dead_code)]
     lock: Arc<Mutex<()>>,
     id: String,
-    locks: &'a RwLock<HashMap<String, (Arc<Mutex<()>>, usize)>>,
+    locks: &'a RwLock<HashMap<String, LockEntry>>,
 }
 
 impl Drop for LockGuard<'_> {

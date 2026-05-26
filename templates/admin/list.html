@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Pastebox</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Pastebox Admin</h1>
+      <a href="/admin/logout" class="text-sm text-gray-400 hover:text-white">Logout</a>
+    </div>
+
+    <div class="bg-gray-800 rounded-lg overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-700 text-gray-400">
+            <th class="text-left px-4 py-3">ID</th>
+            <th class="text-left px-4 py-3">Policy</th>
+            <th class="text-right px-4 py-3">Size</th>
+            <th class="text-left px-4 py-3">Type</th>
+            <th class="text-center px-4 py-3">Protected</th>
+            <th class="text-left px-4 py-3">Created</th>
+            <th class="text-left px-4 py-3">Expires</th>
+            <th class="text-center px-4 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for paste in pastes %}
+          <tr class="border-b border-gray-700/50 hover:bg-gray-750">
+            <td class="px-4 py-3 font-mono">
+              <a href="/{{ paste.id }}" class="text-blue-400 hover:text-blue-300">{{ paste.id }}</a>
+            </td>
+            <td class="px-4 py-3">{{ paste.data_policy }}</td>
+            <td class="px-4 py-3 text-right">{{ paste.size }}</td>
+            <td class="px-4 py-3 text-gray-400">{{ paste.content_type }}</td>
+            <td class="px-4 py-3 text-center">{% if paste.protected %}&check;{% endif %}</td>
+            <td class="px-4 py-3 text-gray-400">{{ paste.created_at }}</td>
+            <td class="px-4 py-3 text-gray-400">{{ paste.expires_at }}</td>
+            <td class="px-4 py-3 text-center">
+              <form method="post" action="/admin/delete" class="inline">
+                <input type="hidden" name="id" value="{{ paste.id }}">
+                <button type="submit" class="text-red-400 hover:text-red-300 text-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if pastes.is_empty() %}
+      <p class="text-center text-gray-500 py-8">No pastes found</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

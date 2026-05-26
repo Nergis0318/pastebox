@@ -14,7 +14,10 @@ pub fn looks_like_text(data: &[u8]) -> bool {
     let sample = if data.len() > 512 { &data[..512] } else { data };
     match std::str::from_utf8(sample) {
         Ok(s) => {
-            let control_count = s.chars().filter(|c| c.is_control() && *c != '\n' && *c != '\r' && *c != '\t').count();
+            let control_count = s
+                .chars()
+                .filter(|c| c.is_control() && *c != '\n' && *c != '\r' && *c != '\t')
+                .count();
             control_count == 0
         }
         Err(_) => false,
@@ -74,8 +77,13 @@ pub fn generate_password() -> String {
         PASSWORD_DIGITS[rng.gen_range(0..PASSWORD_DIGITS.len())] as char,
         PASSWORD_SPECIAL[rng.gen_range(0..PASSWORD_SPECIAL.len())] as char,
     ];
-    let all: Vec<u8> = [PASSWORD_UPPER, PASSWORD_LOWER, PASSWORD_DIGITS, PASSWORD_SPECIAL]
-        .concat();
+    let all: Vec<u8> = [
+        PASSWORD_UPPER,
+        PASSWORD_LOWER,
+        PASSWORD_DIGITS,
+        PASSWORD_SPECIAL,
+    ]
+    .concat();
     for _ in 0..4 {
         chars.push(all[rng.gen_range(0..all.len())] as char);
     }
@@ -133,12 +141,7 @@ mod tests {
 
     #[test]
     fn test_request_base_url() {
-        let url = request_base_url(
-            Some("https"),
-            Some("example.com"),
-            None,
-            None,
-        );
+        let url = request_base_url(Some("https"), Some("example.com"), None, None);
         assert_eq!(url, "https://example.com");
 
         let url2 = request_base_url(

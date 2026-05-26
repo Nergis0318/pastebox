@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use askama::Template;
 use axum::{
-    extract::{State},
-    http::{header, StatusCode},
-    response::{Html, IntoResponse, Redirect, Response},
     Form,
+    extract::State,
+    http::{StatusCode, header},
+    response::{Html, IntoResponse, Redirect, Response},
 };
 use serde::Deserialize;
 
@@ -33,9 +33,7 @@ pub struct DeleteForm {
     id: String,
 }
 
-pub async fn list(
-    State(state): State<Arc<AppState>>,
-) -> Result<Html<String>, AppError> {
+pub async fn list(State(state): State<Arc<AppState>>) -> Result<Html<String>, AppError> {
     let pastes = state.pastes.list_pastes()?;
     let items: Vec<AdminPasteItem> = pastes
         .into_iter()
@@ -51,18 +49,20 @@ pub async fn list(
         .collect();
 
     let template = AdminListTemplate { pastes: items };
-    let html = template.render().map_err(|e| AppError::Internal(e.into()))?;
+    let html = template
+        .render()
+        .map_err(|e| AppError::Internal(e.into()))?;
     Ok(Html(html))
 }
 
-pub async fn setup_form(
-    State(state): State<Arc<AppState>>,
-) -> Result<Response, AppError> {
+pub async fn setup_form(State(state): State<Arc<AppState>>) -> Result<Response, AppError> {
     if state.admin.admin_exists()? {
         return Err(AppError::Forbidden);
     }
     let template = AdminSetupTemplate { error: None };
-    let html = template.render().map_err(|e| AppError::Internal(e.into()))?;
+    let html = template
+        .render()
+        .map_err(|e| AppError::Internal(e.into()))?;
     Ok(Html(html).into_response())
 }
 
@@ -78,16 +78,16 @@ pub async fn setup_submit(
         let template = AdminSetupTemplate {
             error: Some("Username and password required".into()),
         };
-        let html = template.render().map_err(|e| AppError::Internal(e.into()))?;
+        let html = template
+            .render()
+            .map_err(|e| AppError::Internal(e.into()))?;
         return Ok(Html(html).into_response());
     }
 
     state.admin.create_admin(&form.username, &form.password)?;
 
     let token = state.admin.create_session()?;
-    let cookie = format!(
-        "{SESSION_COOKIE}={token}; Path=/admin; HttpOnly; SameSite=Lax"
-    );
+    let cookie = format!("{SESSION_COOKIE}={token}; Path=/admin; HttpOnly; SameSite=Lax");
 
     let mut resp = Redirect::to("/admin").into_response();
     resp.headers_mut()
@@ -104,19 +104,21 @@ pub async fn login_submit(
     State(state): State<Arc<AppState>>,
     Form(form): Form<LoginForm>,
 ) -> Result<Response, AppError> {
-    let ok = state.admin.authenticate_admin(&form.username, &form.password)?;
+    let ok = state
+        .admin
+        .authenticate_admin(&form.username, &form.password)?;
     if !ok {
         let template = AdminLoginTemplate {
             error: Some("Invalid username or password".into()),
         };
-        let html = template.render().map_err(|e| AppError::Internal(e.into()))?;
+        let html = template
+            .render()
+            .map_err(|e| AppError::Internal(e.into()))?;
         return Ok(Html(html).into_response());
     }
 
     let token = state.admin.create_session()?;
-    let cookie = format!(
-        "{SESSION_COOKIE}={token}; Path=/admin; HttpOnly; SameSite=Lax"
-    );
+    let cookie = format!("{SESSION_COOKIE}={token}; Path=/admin; HttpOnly; SameSite=Lax");
 
     let mut resp = Redirect::to("/admin").into_response();
     resp.headers_mut()
@@ -146,9 +148,7 @@ pub async fn logout(
         let _ = state.admin.delete_session(&t);
     }
 
-    let cookie = format!(
-        "{SESSION_COOKIE}=; Path=/admin; HttpOnly; SameSite=Lax; Max-Age=0"
-    );
+    let cookie = format!("{SESSION_COOKIE}=; Path=/admin; HttpOnly; SameSite=Lax; Max-Age=0");
     let mut resp = Redirect::to("/admin/login").into_response();
     resp.headers_mut()
         .insert(header::SET_COOKIE, cookie.parse().unwrap());

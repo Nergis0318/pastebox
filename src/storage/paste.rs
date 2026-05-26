@@ -96,11 +96,9 @@ impl PasteStore {
         }
 
         let meta_path = self.meta_path(id);
-        let meta: Metadata = serde_json::from_str(
-            &fs::read_to_string(&meta_path)
-                .map_err(|_| AppError::NotFound)?
-        )
-        .map_err(|_| AppError::NotFound)?;
+        let meta: Metadata =
+            serde_json::from_str(&fs::read_to_string(&meta_path).map_err(|_| AppError::NotFound)?)
+                .map_err(|_| AppError::NotFound)?;
 
         if let Ok(expires) = DateTime::parse_from_rfc3339(&meta.expires_at)
             && Utc::now() > expires.with_timezone(&Utc)
@@ -108,20 +106,17 @@ impl PasteStore {
             return Err(AppError::Gone);
         }
 
-        let content = fs::read(self.paste_path(id))
-            .map_err(|_| AppError::NotFound)?;
+        let content = fs::read(self.paste_path(id)).map_err(|_| AppError::NotFound)?;
 
         Ok((meta, content))
     }
 
     pub fn delete(&self, id: &str, delete_token: &str) -> Result<(), crate::errors::AppError> {
         use crate::errors::AppError;
-        let meta: Metadata =
-            serde_json::from_str(
-                &fs::read_to_string(self.meta_path(id))
-                    .map_err(|_| AppError::NotFound)?
-            )
-            .map_err(|_| AppError::NotFound)?;
+        let meta: Metadata = serde_json::from_str(
+            &fs::read_to_string(self.meta_path(id)).map_err(|_| AppError::NotFound)?,
+        )
+        .map_err(|_| AppError::NotFound)?;
 
         let token_hash = hex::encode(Sha256::digest(delete_token.as_bytes()));
         if token_hash != meta.delete_token_hash {
@@ -152,9 +147,8 @@ impl PasteStore {
         for entry in fs::read_dir(&self.data_dir)? {
             let entry = entry?;
             if entry.file_name().to_string_lossy().ends_with(".json")
-                && let Ok(meta) = serde_json::from_reader::<_, Metadata>(
-                    fs::File::open(entry.path())?
-                )
+                && let Ok(meta) =
+                    serde_json::from_reader::<_, Metadata>(fs::File::open(entry.path())?)
             {
                 pastes.push(meta);
             }
@@ -246,7 +240,9 @@ mod tests {
             expire_days: 30,
         };
         let store = PasteStore::new(&config).unwrap();
-        let meta = store.create(b"hello", "text/plain", None, "secret", "temporary").unwrap();
+        let meta = store
+            .create(b"hello", "text/plain", None, "secret", "temporary")
+            .unwrap();
         assert_eq!(meta.content_type, "text/plain");
         assert_eq!(meta.data_policy, "temporary");
 
@@ -266,7 +262,15 @@ mod tests {
             expire_days: 30,
         };
         let store = PasteStore::new(&config).unwrap();
-        let meta = store.create(b"secret content", "text/plain", Some("pass123"), "tok", "temporary").unwrap();
+        let meta = store
+            .create(
+                b"secret content",
+                "text/plain",
+                Some("pass123"),
+                "tok",
+                "temporary",
+            )
+            .unwrap();
         assert!(meta.password_hash.is_some());
     }
 
@@ -279,7 +283,9 @@ mod tests {
             expire_days: 30,
         };
         let store = PasteStore::new(&config).unwrap();
-        let meta = store.create(b"data", "text/plain", None, "tok", "temporary").unwrap();
+        let meta = store
+            .create(b"data", "text/plain", None, "tok", "temporary")
+            .unwrap();
         store.admin_delete(&meta.id).unwrap();
         assert!(store.open(&meta.id).is_err());
     }

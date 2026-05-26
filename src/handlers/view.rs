@@ -3,7 +3,7 @@ use std::sync::Arc;
 use askama::Template;
 use axum::{
     extract::{Path, Query, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     response::{Html, IntoResponse, Response},
 };
 use serde::Deserialize;
@@ -40,11 +40,10 @@ pub async fn get(
 
     // Check password
     if let Some(ref pw_hash) = meta.password_hash {
-        let provided = params.password.as_deref().or_else(|| {
-            headers
-                .get("paste-password")
-                .and_then(|v| v.to_str().ok())
-        });
+        let provided = params
+            .password
+            .as_deref()
+            .or_else(|| headers.get("paste-password").and_then(|v| v.to_str().ok()));
 
         match provided {
             Some(pw) => {
@@ -69,7 +68,9 @@ pub async fn get(
         let mut resp = Response::new(axum::body::Body::from(content));
         resp.headers_mut().insert(
             header::CONTENT_TYPE,
-            meta.content_type.parse().unwrap_or(header::HeaderValue::from_static("text/plain")),
+            meta.content_type
+                .parse()
+                .unwrap_or(header::HeaderValue::from_static("text/plain")),
         );
         if !is_text && !is_raw && is_browser {
             resp.headers_mut().insert(
@@ -91,14 +92,18 @@ pub async fn get(
             expires_at: meta.expires_at,
             is_text: true,
         };
-        let html = template.render().map_err(|e| AppError::Internal(e.into()))?;
+        let html = template
+            .render()
+            .map_err(|e| AppError::Internal(e.into()))?;
         Ok(Html(html).into_response())
     } else {
         // Binary content - download
         let mut resp = Response::new(axum::body::Body::from(content));
         resp.headers_mut().insert(
             header::CONTENT_TYPE,
-            meta.content_type.parse().unwrap_or(header::HeaderValue::from_static("application/octet-stream")),
+            meta.content_type
+                .parse()
+                .unwrap_or(header::HeaderValue::from_static("application/octet-stream")),
         );
         resp.headers_mut().insert(
             header::CONTENT_DISPOSITION,

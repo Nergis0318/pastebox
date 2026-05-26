@@ -10,9 +10,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::{
-    middleware as axum_middleware,
+    Router, middleware as axum_middleware,
     routing::{get, post},
-    Router,
 };
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
@@ -33,8 +32,7 @@ pub struct AppState {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info")),
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
 
@@ -81,12 +79,23 @@ async fn main() -> anyhow::Result<()> {
 
     // Public admin routes (no auth)
     let public_admin = Router::new()
-        .route("/admin/setup", get(handlers::admin::setup_form).post(handlers::admin::setup_submit))
-        .route("/admin/login", get(handlers::admin::login_form).post(handlers::admin::login_submit));
+        .route(
+            "/admin/setup",
+            get(handlers::admin::setup_form).post(handlers::admin::setup_submit),
+        )
+        .route(
+            "/admin/login",
+            get(handlers::admin::login_form).post(handlers::admin::login_submit),
+        );
 
     // Main routes
     let app = Router::new()
-        .route("/", get(handlers::index::get).post(handlers::upload::handle).put(handlers::upload::handle))
+        .route(
+            "/",
+            get(handlers::index::get)
+                .post(handlers::upload::handle)
+                .put(handlers::upload::handle),
+        )
         .route("/{id}", get(handlers::view::get))
         .merge(admin_routes)
         .merge(public_admin)

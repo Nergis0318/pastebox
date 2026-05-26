@@ -1,6 +1,6 @@
 use axum::{
     extract::{Request, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
 };
@@ -56,9 +56,7 @@ pub fn base_url_from_headers_map(headers: &HeaderMap) -> String {
     let scheme = headers
         .get("x-forwarded-proto")
         .and_then(|v| v.to_str().ok());
-    let host = headers
-        .get(header::HOST)
-        .and_then(|v| v.to_str().ok());
+    let host = headers.get(header::HOST).and_then(|v| v.to_str().ok());
     let forwarded_proto = headers
         .get("x-forwarded-proto")
         .and_then(|v| v.to_str().ok());

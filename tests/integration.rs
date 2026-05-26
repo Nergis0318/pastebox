@@ -24,18 +24,20 @@ impl TestServer {
         let port = find_open_port()?;
         let base_url = format!("http://127.0.0.1:{port}");
 
-        let bin = std::env::var("CARGO_BIN_EXE_pastebox")
-            .unwrap_or_else(|_| {
-                if cfg!(windows) {
-                    "target/debug/pastebox.exe".into()
-                } else {
-                    "target/debug/pastebox".into()
-                }
-            });
+        let bin = std::env::var("CARGO_BIN_EXE_pastebox").unwrap_or_else(|_| {
+            if cfg!(windows) {
+                "target/debug/pastebox.exe".into()
+            } else {
+                "target/debug/pastebox".into()
+            }
+        });
 
         let child = Command::new(&bin)
             .env("PASTEBOX_LISTEN_ADDR", format!("127.0.0.1:{port}"))
-            .env("PASTEBOX_DATA_DIR", data_dir.path().to_string_lossy().to_string())
+            .env(
+                "PASTEBOX_DATA_DIR",
+                data_dir.path().to_string_lossy().to_string(),
+            )
             .env("PASTEBOX_EXPIRE_DAYS", "30")
             .spawn()?;
 

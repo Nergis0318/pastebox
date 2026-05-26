@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::{
     body::Bytes,
     extract::State,
-    http::{HeaderMap, header, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     response::IntoResponse,
 };
 
@@ -29,7 +29,13 @@ pub async fn handle(
     let data_policy = headers
         .get("data-policy")
         .and_then(|v| v.to_str().ok())
-        .map(|v| if v == "permanent" { "permanent" } else { "temporary" })
+        .map(|v| {
+            if v == "permanent" {
+                "permanent"
+            } else {
+                "temporary"
+            }
+        })
         .unwrap_or("temporary");
 
     let content = body.to_vec();

@@ -1,9 +1,9 @@
 use crate::config::Config;
-use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use rand::Rng;
-use rand::rngs::OsRng;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::SaltString};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
+use rand::Rng;
+use rand::rngs::OsRng;
 use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -26,9 +26,7 @@ impl AdminStore {
     pub fn new(config: &Config) -> anyhow::Result<Self> {
         let db_path = config.data_dir.join("pastebox.db");
         let manager = SqliteConnectionManager::file(&db_path);
-        let pool = Pool::builder()
-            .max_size(4)
-            .build(manager)?;
+        let pool = Pool::builder().max_size(4).build(manager)?;
 
         let conn = pool.get()?;
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")?;
@@ -43,7 +41,7 @@ impl AdminStore {
                 token_hash TEXT PRIMARY KEY,
                 created_at_unix INTEGER NOT NULL,
                 expires_at_unix INTEGER NOT NULL
-            );"
+            );",
         )?;
 
         Ok(Self { pool })
@@ -51,11 +49,8 @@ impl AdminStore {
 
     pub fn admin_exists(&self) -> anyhow::Result<bool> {
         let conn = self.pool.get()?;
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM pastebox_admin",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 =
+            conn.query_row("SELECT COUNT(*) FROM pastebox_admin", [], |row| row.get(0))?;
         Ok(count > 0)
     }
 

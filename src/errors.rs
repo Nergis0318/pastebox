@@ -33,7 +33,10 @@ impl IntoResponse for AppError {
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, format!("{msg}\n")),
             AppError::Internal(e) => {
                 tracing::error!(?e, "internal error");
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal server error\n".into())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "internal server error\n".into(),
+                )
             }
         };
         (status, body).into_response()
